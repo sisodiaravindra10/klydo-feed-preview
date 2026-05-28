@@ -6,6 +6,7 @@ import { CaptureSurface } from "./CaptureSurface";
 import {
   captureNode,
   triggerDownload,
+  describeError,
   DownloadFormat,
   DownloadScale,
 } from "@/lib/download";
@@ -55,8 +56,7 @@ export function DownloadDialog({
       }, 600);
     } catch (err) {
       console.error("Capture failed:", err);
-      const msg = err instanceof Error ? err.message : String(err);
-      setErrorMsg(msg.slice(0, 280));
+      setErrorMsg(describeError(err).slice(0, 280));
       setProgress("");
       setBusy(false);
     }

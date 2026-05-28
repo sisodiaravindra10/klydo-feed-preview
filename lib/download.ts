@@ -15,6 +15,31 @@ export interface DownloadOptions {
   onProgress?: (msg: string) => void;
 }
 
+/** 1×1 transparent PNG, used as a fallback when an image fails to embed. */
+const TRANSPARENT_PIXEL =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+
+/**
+ * html-to-image rejects with Event objects (e.g. img onerror) — these
+ * stringify to "[object Event]" which is useless. Extract something useful.
+ */
+export function describeError(err: unknown): string {
+  if (err instanceof Error) return err.message || err.toString();
+  if (typeof err === "string") return err;
+  if (err && typeof err === "object" && "type" in err) {
+    const e = err as Event & { target?: any };
+    const t = e.target;
+    const src = t?.src ?? t?.currentSrc ?? t?.href ?? "";
+    const tag = t?.tagName ?? "node";
+    return `${tag} ${e.type}: ${String(src).slice(0, 120)}`;
+  }
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
+
 /**
  * Wait for every <img> in the subtree to either finish loading or fail
  * (we don't want one broken image to deadlock the capture). Also waits
@@ -86,6 +111,9 @@ export async function captureNode(
     skipFonts: false,
     // Helps html-to-image avoid stale resources
     fetchRequestInit: { cache: "no-cache" as RequestCache },
+    // If one image fails to embed, swap it for a transparent pixel
+    // and keep going instead of rejecting the entire capture.
+    imagePlaceholder: TRANSPARENT_PIXEL,
   };
 
   if (opts.format === "png") {
