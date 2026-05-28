@@ -4,8 +4,16 @@
     {
       "name": "klydo-feed-preview",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "-p", "3737"],
-      "port": 3737
+      "runtimeArgs": ["run", "dev"],
+      "port": 3737,
+      "autoPort": true
+    },
+    {
+      "name": "klydo-feed-preview-prod",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "port": 3838,
+      "autoPort": true
     }
   ]
 }

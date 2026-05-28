@@ -105,15 +105,32 @@ export async function captureNode(
 
   opts.onProgress?.("Rendering…");
 
+  // Use the node's actual rendered size. Without explicit width/height,
+  // html-to-image sometimes captures with 0 dimensions when the node is
+  // positioned off-screen or hidden via opacity.
+  const rect = node.getBoundingClientRect();
+  const width = Math.max(1, Math.round(rect.width || node.scrollWidth));
+  const height = Math.max(1, Math.round(rect.height || node.scrollHeight));
+
   const common = {
     pixelRatio: opts.scale,
-    cacheBust: true,
+    // IMPORTANT: cacheBust appends ?<ts> to URLs. Blob URLs don't support
+    // query strings — appending one makes them invalid and every blob image
+    // fails to embed, producing a blank-white capture. Keep this OFF.
+    cacheBust: false,
     skipFonts: false,
-    // Helps html-to-image avoid stale resources
+    width,
+    height,
     fetchRequestInit: { cache: "no-cache" as RequestCache },
     // If one image fails to embed, swap it for a transparent pixel
     // and keep going instead of rejecting the entire capture.
     imagePlaceholder: TRANSPARENT_PIXEL,
+    // Cancel any inherited transforms/opacity from the offscreen wrapper.
+    style: {
+      transform: "none",
+      opacity: "1",
+      visibility: "visible",
+    },
   };
 
   if (opts.format === "png") {
