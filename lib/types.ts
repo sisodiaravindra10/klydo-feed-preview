@@ -74,7 +74,25 @@ export interface FeedSection {
   customWidth?: number;
   customHeight?: number;
   customCols?: 1 | 2 | 3 | 4;
+  /** Border radius in pixels applied to every card in this section */
+  cornerRadius?: number;
 }
+
+/** Sensible default border-radius per section type, in pixels */
+export const SECTION_DEFAULT_RADIUS: Record<SectionType, number> = {
+  banner: 16,
+  hero: 24,
+  "trends-banner": 16,
+  "looks-banner": 16,
+  "grid-2-big": 16,
+  "grid-2": 16,
+  "grid-3": 12,
+  "grid-4": 8,
+  mixed: 16,
+  strip: 16,
+  custom: 12,
+  "promo-text": 0,
+};
 
 export interface FeedDoc {
   id: string;

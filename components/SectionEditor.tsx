@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { FeedSection, SectionType, SECTION_LABELS, SECTION_SLOTS } from "@/lib/types";
+import { FeedSection, SectionType, SECTION_LABELS, SECTION_SLOTS, SECTION_DEFAULT_RADIUS } from "@/lib/types";
 import { saveImage, deleteImage } from "@/lib/storage";
 import { SectionThumb } from "./SectionThumb";
 
@@ -229,6 +229,38 @@ export function SectionEditor({
         value={section.title ?? ""}
         onChange={(e) => onChange({ ...section, title: e.target.value })}
       />
+
+      {section.type !== "promo-text" && (
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-[10px] uppercase tracking-wider text-[#7a8294] w-16 shrink-0">
+            Corner
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={40}
+            step={1}
+            value={section.cornerRadius ?? SECTION_DEFAULT_RADIUS[section.type]}
+            onChange={(e) =>
+              onChange({ ...section, cornerRadius: parseInt(e.target.value, 10) })
+            }
+            className="flex-1 accent-[#EC2D7C]"
+          />
+          <span className="text-[11px] text-[#cfd4e0] font-mono w-10 text-right">
+            {section.cornerRadius ?? SECTION_DEFAULT_RADIUS[section.type]}px
+          </span>
+          {typeof section.cornerRadius === "number" &&
+            section.cornerRadius !== SECTION_DEFAULT_RADIUS[section.type] && (
+              <button
+                className="ghost !px-2 !py-1 !text-[10px]"
+                onClick={() => onChange({ ...section, cornerRadius: undefined })}
+                title="Reset to default"
+              >
+                ↺
+              </button>
+            )}
+        </div>
+      )}
 
       {section.type === "custom" && (
         <div className="mt-2 panel-soft p-2 grid grid-cols-12 gap-2 items-center">

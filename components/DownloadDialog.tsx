@@ -24,6 +24,7 @@ export function DownloadDialog({
   const [frame, setFrame] = useState<"feed" | "phone">("feed");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const captureRef = useRef<HTMLDivElement>(null);
 
   if (!open) return null;
@@ -31,16 +32,20 @@ export function DownloadDialog({
   async function handleDownload() {
     if (!captureRef.current) return;
     setBusy(true);
-    setProgress("Loading images…");
+    setErrorMsg(null);
+    setProgress("Preparing…");
     try {
-      // Give images a beat to load (IDB blob URLs)
-      await new Promise((r) => setTimeout(r, 400));
-      setProgress("Rendering…");
       const filename = `${feed.name.replace(/[^a-z0-9-_ ]/gi, "").trim() || "klydo-feed"}-${frame}${scale > 1 ? `@${scale}x` : ""}.${format}`;
+      const expectedImageCount = feed.sections.reduce(
+        (n, s) => n + s.imageIds.length,
+        0
+      );
       const dataUrl = await captureNode(captureRef.current, {
         format,
         scale,
         filename,
+        expectedImageCount,
+        onProgress: setProgress,
       });
       triggerDownload(dataUrl, filename);
       setProgress("Done");
@@ -49,8 +54,10 @@ export function DownloadDialog({
         setProgress("");
       }, 600);
     } catch (err) {
-      console.error(err);
-      setProgress("Failed — see console");
+      console.error("Capture failed:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      setErrorMsg(msg.slice(0, 280));
+      setProgress("");
       setBusy(false);
     }
   }
@@ -112,6 +119,20 @@ export function DownloadDialog({
           {sectionCount === 0 && (
             <div className="mt-3 text-[12px] text-[#fb7185]">
               Add at least one section before downloading.
+            </div>
+          )}
+
+          {errorMsg && (
+            <div className="mt-3 panel-soft p-3 border-[#fb7185]/50">
+              <div className="text-[11px] font-bold text-[#fb7185] mb-1">
+                Download failed
+              </div>
+              <div className="text-[11px] text-[#cfd4e0] font-mono break-all">
+                {errorMsg}
+              </div>
+              <div className="text-[10px] text-[#9ca3af] mt-2">
+                Try a smaller resolution (1x), or open DevTools console for the full stack trace.
+              </div>
             </div>
           )}
 

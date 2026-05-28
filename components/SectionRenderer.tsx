@@ -1,11 +1,17 @@
 "use client";
 
-import { FeedSection, SECTION_DIMS } from "@/lib/types";
+import { FeedSection, SECTION_DIMS, SECTION_DEFAULT_RADIUS } from "@/lib/types";
 import { FeedImage } from "./FeedImage";
 import { Carousel } from "./Carousel";
 
 function aspect(dims: [number, number]): React.CSSProperties {
   return { aspectRatio: `${dims[0]} / ${dims[1]}` };
+}
+
+function radius(section: FeedSection): number {
+  return typeof section.cornerRadius === "number"
+    ? Math.max(0, section.cornerRadius)
+    : SECTION_DEFAULT_RADIUS[section.type];
 }
 
 function SectionTitle({ title }: { title?: string }) {
@@ -35,21 +41,21 @@ function PromoText({ section }: { section: FeedSection }) {
 function CardOrCarousel({
   ids,
   dims,
-  rounded,
+  borderRadius,
   bg = "#FFF7EC",
   label,
 }: {
   ids: (string | undefined)[];
   dims: [number, number];
-  rounded: string;
+  borderRadius: number;
   bg?: string;
   label: string;
 }) {
   if (ids.length <= 1) {
     return (
       <div
-        className={`overflow-hidden ${rounded}`}
-        style={{ background: bg, ...aspect(dims) }}
+        className="overflow-hidden"
+        style={{ background: bg, borderRadius, ...aspect(dims) }}
       >
         <FeedImage id={ids[0]} placeholderLabel={label} />
       </div>
@@ -60,8 +66,8 @@ function CardOrCarousel({
       {ids.map((id, i) => (
         <div
           key={i}
-          className={`overflow-hidden ${rounded}`}
-          style={{ background: bg, ...aspect(dims) }}
+          className="overflow-hidden"
+          style={{ background: bg, borderRadius, ...aspect(dims) }}
         >
           <FeedImage id={id} placeholderLabel={`${label} ${i + 1}`} />
         </div>
@@ -75,7 +81,7 @@ function BannerSection({ section }: { section: FeedSection }) {
   return (
     <div className="px-4 pb-3">
       <SectionTitle title={section.title} />
-      <CardOrCarousel ids={ids} dims={SECTION_DIMS.banner!} rounded="rounded-2xl" label="Banner" />
+      <CardOrCarousel ids={ids} dims={SECTION_DIMS.banner!} borderRadius={radius(section)} label="Banner" />
     </div>
   );
 }
@@ -85,7 +91,7 @@ function HeroSection({ section }: { section: FeedSection }) {
   return (
     <div className="pb-3 px-4">
       <SectionTitle title={section.title} />
-      <CardOrCarousel ids={ids} dims={SECTION_DIMS.hero!} rounded="rounded-3xl" label="Hero" />
+      <CardOrCarousel ids={ids} dims={SECTION_DIMS.hero!} borderRadius={radius(section)} label="Hero" />
     </div>
   );
 }
@@ -98,7 +104,7 @@ function TrendsBannerSection({ section }: { section: FeedSection }) {
       <CardOrCarousel
         ids={ids}
         dims={SECTION_DIMS["trends-banner"]!}
-        rounded="rounded-2xl"
+        borderRadius={radius(section)}
         label="Trends"
       />
     </div>
@@ -113,7 +119,7 @@ function LooksBannerSection({ section }: { section: FeedSection }) {
       <CardOrCarousel
         ids={ids}
         dims={SECTION_DIMS["looks-banner"]!}
-        rounded="rounded-2xl"
+        borderRadius={radius(section)}
         label="Looks"
       />
     </div>
@@ -124,14 +130,12 @@ function GridSection({
   section,
   cols,
   dims,
-  rounded,
   gap,
   defaultSlots,
 }: {
   section: FeedSection;
   cols: 2 | 3 | 4;
   dims: [number, number];
-  rounded: string;
   gap: string;
   defaultSlots: number;
 }) {
@@ -140,6 +144,7 @@ function GridSection({
     : Array.from({ length: defaultSlots }, () => undefined as undefined);
   const colsClass =
     cols === 2 ? "grid-cols-2" : cols === 3 ? "grid-cols-3" : "grid-cols-4";
+  const br = radius(section);
   return (
     <div className="pb-4">
       <SectionTitle title={section.title} />
@@ -147,8 +152,8 @@ function GridSection({
         {ids.map((id, i) => (
           <div
             key={i}
-            className={`overflow-hidden bg-[#FFF7EC] shadow-card ${rounded}`}
-            style={aspect(dims)}
+            className="overflow-hidden bg-[#FFF7EC] shadow-card"
+            style={{ borderRadius: br, ...aspect(dims) }}
           >
             <FeedImage id={id} placeholderLabel={`${i + 1}`} />
           </div>
@@ -164,7 +169,6 @@ function Grid2BigSection({ section }: { section: FeedSection }) {
       section={section}
       cols={2}
       dims={SECTION_DIMS["grid-2-big"]!}
-      rounded="rounded-2xl"
       gap="gap-3"
       defaultSlots={2}
     />
@@ -177,7 +181,6 @@ function Grid2Section({ section }: { section: FeedSection }) {
       section={section}
       cols={2}
       dims={SECTION_DIMS["grid-2"]!}
-      rounded="rounded-2xl"
       gap="gap-3"
       defaultSlots={4}
     />
@@ -190,7 +193,6 @@ function Grid3Section({ section }: { section: FeedSection }) {
       section={section}
       cols={3}
       dims={SECTION_DIMS["grid-3"]!}
-      rounded="rounded-xl"
       gap="gap-2.5"
       defaultSlots={3}
     />
@@ -203,7 +205,6 @@ function Grid4Section({ section }: { section: FeedSection }) {
       section={section}
       cols={4}
       dims={SECTION_DIMS["grid-4"]!}
-      rounded="rounded-lg"
       gap="gap-2"
       defaultSlots={4}
     />
@@ -211,14 +212,13 @@ function Grid4Section({ section }: { section: FeedSection }) {
 }
 
 function MixedSection({ section }: { section: FeedSection }) {
-  // First 2 images = top row at 520x750 (big 2-grid)
-  // Remaining = 3-column at 387x492
   const top = section.imageIds.slice(0, 2);
   const bottom = section.imageIds.slice(2);
   const topFilled: (string | undefined)[] =
     top.length === 2 ? top : [top[0], undefined];
   const bottomFilled: (string | undefined)[] =
     bottom.length > 0 ? bottom : [undefined, undefined, undefined];
+  const br = radius(section);
 
   return (
     <div className="pb-4">
@@ -227,8 +227,8 @@ function MixedSection({ section }: { section: FeedSection }) {
         {topFilled.map((id, i) => (
           <div
             key={i}
-            className="rounded-2xl overflow-hidden bg-[#FFF7EC] shadow-card"
-            style={aspect(SECTION_DIMS["grid-2-big"]!)}
+            className="overflow-hidden bg-[#FFF7EC] shadow-card"
+            style={{ borderRadius: br, ...aspect(SECTION_DIMS["grid-2-big"]!) }}
           >
             <FeedImage id={id} placeholderLabel={`Hero ${i + 1}`} />
           </div>
@@ -238,8 +238,8 @@ function MixedSection({ section }: { section: FeedSection }) {
         {bottomFilled.map((id, i) => (
           <div
             key={i}
-            className="rounded-xl overflow-hidden bg-[#FFF7EC] shadow-card"
-            style={aspect(SECTION_DIMS["grid-3"]!)}
+            className="overflow-hidden bg-[#FFF7EC] shadow-card"
+            style={{ borderRadius: Math.max(0, br - 4), ...aspect(SECTION_DIMS["grid-3"]!) }}
           >
             <FeedImage id={id} placeholderLabel={`${i + 1}`} />
           </div>
@@ -265,14 +265,7 @@ function CustomSection({ section }: { section: FeedSection }) {
       ? "grid-cols-3"
       : "grid-cols-4";
   const gap = cols === 1 ? "gap-0" : cols === 2 ? "gap-3" : cols === 3 ? "gap-2.5" : "gap-2";
-  const rounded =
-    cols === 1
-      ? "rounded-2xl"
-      : cols === 2
-      ? "rounded-2xl"
-      : cols === 3
-      ? "rounded-xl"
-      : "rounded-lg";
+  const br = radius(section);
   return (
     <div className="pb-4">
       <SectionTitle title={section.title} />
@@ -280,8 +273,8 @@ function CustomSection({ section }: { section: FeedSection }) {
         {ids.map((id, i) => (
           <div
             key={i}
-            className={`overflow-hidden bg-[#FFF7EC] shadow-card ${rounded}`}
-            style={aspect([w, h])}
+            className="overflow-hidden bg-[#FFF7EC] shadow-card"
+            style={{ borderRadius: br, ...aspect([w, h]) }}
           >
             <FeedImage id={id} placeholderLabel={`${w}×${h}`} />
           </div>
@@ -293,14 +286,20 @@ function CustomSection({ section }: { section: FeedSection }) {
 
 function StripSection({ section }: { section: FeedSection }) {
   const hasImage = !!section.imageIds[0];
+  const br = radius(section);
   return (
     <div className="pb-2">
       <SectionTitle title={section.title} />
-      <div className="w-full">
+      <div className="w-full px-4">
         {hasImage ? (
-          <FeedImage id={section.imageIds[0]} fit="natural" />
+          <div className="overflow-hidden" style={{ borderRadius: br }}>
+            <FeedImage id={section.imageIds[0]} fit="natural" />
+          </div>
         ) : (
-          <div className="mx-4 rounded-2xl bg-gradient-to-br from-[#FFE4F0] to-[#F5EAFE] grid place-items-center h-[300px] text-[11px] font-semibold text-[#9CA3AF] uppercase">
+          <div
+            className="bg-gradient-to-br from-[#FFE4F0] to-[#F5EAFE] grid place-items-center h-[300px] text-[11px] font-semibold text-[#9CA3AF] uppercase"
+            style={{ borderRadius: br }}
+          >
             Strip image (full feed export)
           </div>
         )}
